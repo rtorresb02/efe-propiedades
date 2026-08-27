@@ -49,7 +49,7 @@
   <button id="btnAll" onclick="verTodas()">Ver todas</button>
 </div>
 <div id="bnr"></div>
-<div id="fch">21/04/2026 16:31</div>
+<div id="fch">27/08/2026 12:04</div>
 <div id="pnl">
   <div class="ps"><div class="pt">Mapa Base</div>
     <label class="rr"><input type="radio" name="bm" value="estandar" checked> Estandar</label>
@@ -124,9 +124,10 @@ async function cargar(){
     document.getElementById("loader").style.display="none";
     poblarSt("");
     const tot=Object.values(SP).reduce((a,v)=>a+v.length,0);
-    document.getElementById("fch").textContent=`21/04/2026 16:31  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
+    document.getElementById("fch").textContent=`27/08/2026 12:04  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
     renderAll();
     map.on("moveend zoomend",()=>{if(!curSt&&!curReg)renderProps();});
+    window.setTimeout(()=>map.fire("moveend"),800);
   }catch(e){
     document.getElementById("lmsg").textContent="Error cargando datos: "+e.message;
     console.error(e);
@@ -138,7 +139,19 @@ function poblarSt(regF){
   (regF?ST.filter(s=>s.region_short===regF):ST).sort((a,b)=>a.nombre.localeCompare(b.nombre,"es")).forEach(s=>{const o=document.createElement("option");o.value=s.nombre;o.textContent=s.nombre;stSel.appendChild(o);});
 }
 
-stSel.onchange=()=>{curSt=stSel.value;if(curSt){const s=ST.find(x=>x.nombre===curSt);if(s)map.setView([s.lat,s.lng],15);}renderAll();};
+stSel.onchange=()=>{
+  curSt=stSel.value;
+  if(curSt){
+    const s=ST.find(x=>x.nombre===curSt);
+    if(s){
+      map.setView([s.lat,s.lng],15);
+      renderAll();
+      setTimeout(()=>{renderProps();map.invalidateSize();},300);
+    }
+  } else {
+    renderAll();
+  }
+};
 regSel.onchange=()=>{
   curReg=regSel.value;curSt="";poblarSt(curReg);renderAll();
   if(curReg){const sts=ST.filter(s=>s.region_short===curReg);if(sts.length){const lats=sts.map(s=>s.lat),lngs=sts.map(s=>s.lng);map.fitBounds([[Math.min(...lats),Math.min(...lngs)],[Math.max(...lats),Math.max(...lngs)]],{padding:[60,60]});}}
@@ -195,6 +208,7 @@ function renderProps(){
   const tot=Object.values(cnts).reduce((a,c)=>a+c,0);
   const b=document.getElementById("bnr");b.style.display="block";
   b.textContent=curSt?`${curSt}  ·  ${tot.toLocaleString("es-CL")} propiedades`:`${curReg||"Propiedades visibles"}  ·  ${tot.toLocaleString("es-CL")}`;
+  setTimeout(()=>{try{map._renderer._redraw();}catch(e){}},150);
 }
 function renderAll(){renderSt();renderRings();renderProps();if(document.getElementById("chkKml").checked)renderKML();}
 window.verTodas=()=>{curSt="";curReg="";stSel.value="";regSel.value="";poblarSt("");map.setView([-33.65,-70.72],8);renderAll();};
