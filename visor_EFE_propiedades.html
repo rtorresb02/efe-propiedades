@@ -53,7 +53,7 @@
   <button id="btnAll" onclick="verTodas()">Ver todas</button>
 </div>
 <div id="bnr"></div>
-<div id="fch">16/09/2026 17:13 · v6-fix</div>
+<div id="fch">16/09/2026 17:20 · v6-fix</div>
 <div id="pnl">
   <div class="ps"><div class="pt">Mapa Base</div>
     <label class="rr"><input type="radio" name="bm" value="estandar"> Estandar</label>
@@ -126,12 +126,12 @@ const stSel=document.getElementById("stSel"),regSel=document.getElementById("reg
 async function cargar(){
   document.getElementById("lmsg").textContent="Cargando propiedades...";
   try{
-    const[r1,r2]=await Promise.all([fetch("efe_estaciones.json").then(r=>r.json()),fetch("efe_propiedades.json").then(r=>r.json())]);
+    const[r1,r2]=await Promise.all([fetch("efe_estaciones.json?v="+Date.now()).then(r=>r.json()),fetch("efe_propiedades.json?v="+Date.now()).then(r=>r.json())]);
     ST=r1;SP=r2;
     document.getElementById("loader").style.display="none";
     poblarSt("");
     const tot=Object.values(SP).reduce((a,v)=>a+v.length,0);
-    document.getElementById("fch").textContent=`16/09/2026 17:13  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
+    document.getElementById("fch").textContent=`16/09/2026 17:20  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
     renderAll();
     map.on("moveend zoomend",()=>{if(!curSt&&!curReg)renderProps();});
     window.setTimeout(()=>map.fire("moveend"),800);
@@ -152,9 +152,11 @@ function selStation(nom){
   curSt=s.nombre;
   stSel.value=s.nombre;
   document.getElementById("stDrop").style.display="none";
-  map.setView([s.lat,s.lng],15);
+  map.setView([s.lat,s.lng],15,{animate:false});
   renderAll();
-  setTimeout(()=>{renderProps();map.invalidateSize();forceRedraw();},300);
+  forceRedraw();
+  setTimeout(()=>{renderProps();map.invalidateSize();forceRedraw();},50);
+  setTimeout(()=>{renderProps();forceRedraw();},350);
 }
 const stDropEl=document.getElementById("stDrop");
 function showDrop(list){
@@ -177,8 +179,11 @@ stSel.onfocus=()=>{showDrop(stSel.value.trim()?STL.filter(s=>s.nombre.toLowerCas
 document.addEventListener("click",(e)=>{if(!e.target.closest("#stSel")&&!e.target.closest("#stDrop"))stDropEl.style.display="none";});
 regSel.onchange=()=>{
   curReg=regSel.value;curSt="";poblarSt(curReg);renderAll();
-  if(curReg){const sts=ST.filter(s=>s.region_short===curReg);if(sts.length){const lats=sts.map(s=>s.lat),lngs=sts.map(s=>s.lng);map.fitBounds([[Math.min(...lats),Math.min(...lngs)],[Math.max(...lats),Math.max(...lngs)]],{padding:[60,60]});}}
-  else map.setView([-33.65,-70.72],8);
+  if(curReg){const sts=ST.filter(s=>s.region_short===curReg);if(sts.length){const lats=sts.map(s=>s.lat),lngs=sts.map(s=>s.lng);map.fitBounds([[Math.min(...lats),Math.min(...lngs)],[Math.max(...lats),Math.max(...lngs)]],{padding:[60,60],animate:false});}}
+  else map.setView([-33.65,-70.72],8,{animate:false});
+  forceRedraw();
+  setTimeout(()=>{renderProps();forceRedraw();},50);
+  setTimeout(()=>{renderProps();forceRedraw();},350);
 };
 
 document.querySelectorAll("input[name=bm]").forEach(r=>r.onchange=()=>{map.removeLayer(curT);curT=TILES[r.value];map.addLayer(curT);curT.bringToBack();});
@@ -235,8 +240,20 @@ function renderProps(){
   setTimeout(forceRedraw,50);
 }
 function renderAll(){renderSt();renderRings();renderProps();if(document.getElementById("chkKml").checked)renderKML();}
-window.verTodas=()=>{curSt="";curReg="";stSel.value="";regSel.value="";poblarSt("");map.setView([-33.65,-70.72],8);renderAll();};
-window.goSt=function(nom){map.closePopup();curSt=nom;stSel.value=nom;const s=ST.find(x=>x.nombre===nom);if(s)map.setView([s.lat,s.lng],15);renderAll();};
+window.verTodas=()=>{
+  curSt="";curReg="";stSel.value="";regSel.value="";poblarSt("");
+  map.setView([-33.65,-70.72],8,{animate:false});renderAll();forceRedraw();
+  setTimeout(()=>{renderProps();forceRedraw();},50);
+  setTimeout(()=>{renderProps();forceRedraw();},350);
+};
+window.goSt=function(nom){
+  map.closePopup();curSt=nom;stSel.value=nom;
+  const s=ST.find(x=>x.nombre===nom);
+  if(s)map.setView([s.lat,s.lng],15,{animate:false});
+  renderAll();forceRedraw();
+  setTimeout(()=>{renderProps();forceRedraw();},50);
+  setTimeout(()=>{renderProps();forceRedraw();},350);
+};
 window.exportXL=function(){
   const wb=XLSX.utils.book_new();
   const HDR=["Estación","Línea","Tipo","Operación","Radio","Dist.(m)","Precio","m²","UF/m²","Fuente","🔗 Link directo"];
