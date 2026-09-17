@@ -53,7 +53,7 @@
   <button id="btnAll" onclick="verTodas()">Ver todas</button>
 </div>
 <div id="bnr"></div>
-<div id="fch">16/09/2026 17:20 · v6-fix</div>
+<div id="fch">17/09/2026 08:42 · v6-fix</div>
 <div id="pnl">
   <div class="ps"><div class="pt">Mapa Base</div>
     <label class="rr"><input type="radio" name="bm" value="estandar"> Estandar</label>
@@ -116,7 +116,7 @@ const LC={"Metrotren Nos":"#185FA5","Rancagua Express":"#4a8a1a","Tren Melipilla
 let SP={},ST=[],curSt="",curReg="";
 let aR=new Set(["r1","r2"]),aP=new Set(["cv","dv","lv","ca","da","la"]);
 let curT=TILES.satelite;
-const mapRenderer=L.canvas({padding:0.5});
+const mapRenderer=L.svg({padding:0.5});
 const map=L.map("map",{center:[-33.65,-70.72],zoom:8,renderer:mapRenderer,layers:[curT]});
 setTimeout(()=>map.invalidateSize(),100);
 function forceRedraw(){if(mapRenderer._redraw)mapRenderer._redraw();}
@@ -131,7 +131,7 @@ async function cargar(){
     document.getElementById("loader").style.display="none";
     poblarSt("");
     const tot=Object.values(SP).reduce((a,v)=>a+v.length,0);
-    document.getElementById("fch").textContent=`16/09/2026 17:20  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
+    document.getElementById("fch").textContent=`17/09/2026 08:42  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
     renderAll();
     map.on("moveend zoomend",()=>{if(!curSt&&!curReg)renderProps();});
     window.setTimeout(()=>map.fire("moveend"),800);
@@ -256,12 +256,12 @@ window.goSt=function(nom){
 };
 window.exportXL=function(){
   const wb=XLSX.utils.book_new();
-  const HDR=["Estación","Línea","Tipo","Operación","Radio","Dist.(m)","Precio","m²","UF/m²","Fuente","🔗 Link directo"];
+  const HDR=["Estación","Línea","Tipo","Operación","Radio","Dist.(m)","Precio","m²","UF/m²","Fuente"];
   let names=curSt?[curSt]:Object.keys(SP);if(curReg&&!curSt)names=ST.filter(s=>s.region_short===curReg).map(s=>s.nombre);
   [["r1","0-800m"],["r2","800m-3km"],["r3","3-5km"],["r4","Mayor 5km"]].forEach(([rid,rl])=>{
     const rows=[HDR];
-    names.forEach(nom=>{const st=ST.find(s=>s.nombre===nom)||{};(SP[nom]||[]).filter(p=>p[4]===rid).forEach(p=>{rows.push([nom,st.linea||"",TL[p[2]],OL[p[3]],rl,p[10],p[7],p[5],p[6],p[9]==="PI"?"PortalInmobiliario":"TocToc",p[8]?{t:"s",v:"🔗 Ver propiedad",l:{Target:p[8]}}:""]);});});
-    const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:22},{wch:18},{wch:14},{wch:10},{wch:12},{wch:9},{wch:18},{wch:7},{wch:9},{wch:18},{wch:35}];
+    names.forEach(nom=>{const st=ST.find(s=>s.nombre===nom)||{};(SP[nom]||[]).filter(p=>p[4]===rid).forEach(p=>{rows.push([nom,st.linea||"",TL[p[2]],OL[p[3]],rl,p[10],p[7],p[5],p[6],p[9]==="PI"?"PortalInmobiliario":"TocToc"]);});});
+    const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:22},{wch:18},{wch:14},{wch:10},{wch:12},{wch:9},{wch:18},{wch:7},{wch:9},{wch:18}];
     XLSX.utils.book_append_sheet(wb,ws,rl);
   });
   XLSX.writeFile(wb,`EFE_${(curSt||curReg||"Todas").replace(/[^a-zA-Z0-9]/g,"_")}_${new Date().toISOString().slice(0,10)}.xlsx`);
