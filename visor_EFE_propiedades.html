@@ -53,7 +53,7 @@
   <button id="btnAll" onclick="verTodas()">Ver todas</button>
 </div>
 <div id="bnr"></div>
-<div id="fch">17/09/2026 08:42 · v6-fix</div>
+<div id="fch">17/09/2026 10:24 · v7-kml</div>
 <div id="pnl">
   <div class="ps"><div class="pt">Mapa Base</div>
     <label class="rr"><input type="radio" name="bm" value="estandar"> Estandar</label>
@@ -131,7 +131,7 @@ async function cargar(){
     document.getElementById("loader").style.display="none";
     poblarSt("");
     const tot=Object.values(SP).reduce((a,v)=>a+v.length,0);
-    document.getElementById("fch").textContent=`17/09/2026 08:42  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
+    document.getElementById("fch").textContent=`17/09/2026 10:24  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
     renderAll();
     map.on("moveend zoomend",()=>{if(!curSt&&!curReg)renderProps();});
     window.setTimeout(()=>map.fire("moveend"),800);
@@ -188,7 +188,7 @@ regSel.onchange=()=>{
 
 document.querySelectorAll("input[name=bm]").forEach(r=>r.onchange=()=>{map.removeLayer(curT);curT=TILES[r.value];map.addLayer(curT);curT.bringToBack();});
 document.getElementById("chkSt").onchange=function(){this.checked?lS.addTo(map):map.removeLayer(lS)};
-document.getElementById("chkKml").onchange=function(){if(this.checked){lK.addTo(map);renderKML();}else map.removeLayer(lK);};
+document.getElementById("chkKml").onchange=function(){if(this.checked){lK.addTo(map);renderKML();}else{map.removeLayer(lK);}forceRedraw();};
 document.querySelectorAll(".cr_").forEach(c=>{if(c.checked)aR.add(c.dataset.r);else aR.delete(c.dataset.r);c.onchange=function(){this.checked?aR.add(this.dataset.r):aR.delete(this.dataset.r);renderRings();};});
 document.querySelectorAll(".cp_").forEach(c=>c.onchange=function(){const k=this.dataset.t+this.dataset.o;this.checked?aP.add(k):aP.delete(k);renderProps();setTimeout(forceRedraw,30);});
 
@@ -197,9 +197,10 @@ function renderKML(){
   lK.clearLayers();
   // Mostrar todos los planos KML siempre (sin filtrar por estacion)
   KML_POLYS.forEach(p=>{
-    L.polygon(p.c,{fillColor:p.f,fillOpacity:p.o,color:p.s,weight:1.5})
+    L.polygon(p.c,{fillColor:p.f,fillOpacity:p.o,color:p.s,weight:1.5,renderer:mapRenderer})
      .bindTooltip(p.n,{sticky:true}).addTo(lK);
   });
+  forceRedraw();
 }
 function renderSt(){
   lS.clearLayers();
@@ -215,8 +216,9 @@ function renderRings(){
   lR.clearLayers();
   let show=curSt?ST.filter(s=>s.nombre===curSt):ST;
   if(curReg&&!curSt)show=show.filter(s=>s.region_short===curReg);
-  ["r4","r3","r2","r1"].forEach(rid=>{if(!aR.has(rid))return;show.forEach(s=>{L.circle([s.lat,s.lng],{radius:RR[rid],color:RS[rid],weight:1.8,dashArray:RD[rid],fillColor:RS[rid],fillOpacity:RA[rid],opacity:.75,interactive:false}).addTo(lR);});});
+  ["r4","r3","r2","r1"].forEach(rid=>{if(!aR.has(rid))return;show.forEach(s=>{L.circle([s.lat,s.lng],{radius:RR[rid],color:RS[rid],weight:1.8,dashArray:RD[rid],fillColor:RS[rid],fillOpacity:RA[rid],opacity:.75,interactive:false,renderer:mapRenderer}).addTo(lR);});});
   lR.bringToBack();
+  forceRedraw();
 }
 function renderProps(){
   lP.clearLayers();
