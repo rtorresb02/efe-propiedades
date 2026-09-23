@@ -46,14 +46,14 @@
 <div id="loader"><div class="spin"></div><div id="lmsg">Cargando propiedades...</div></div>
 <div id="map"></div>
 <div id="top">
-  <span class="tl">Estacion EFE:</span>
+  <span class="tl">Red Operativa EFE:</span>
   <div style="position:relative;flex:1"><input id="stSel" placeholder="Escribe para buscar..." autocomplete="off"/><div id="stDrop"></div></div>
   <span class="tl">Región:</span>
   <select id="regSel"><option value="">Todas</option><option value="Bío-Bío">Bío-Bío</option><option value="La Araucanía">La Araucanía</option><option value="Los Lagos">Los Lagos</option><option value="Maule">Maule</option><option value="Metropolitana">Metropolitana</option><option value="O'Higgins">O'Higgins</option><option value="Región de Arica">Región de Arica</option><option value="Región de Los R">Región de Los R</option><option value="Valparaíso">Valparaíso</option><option value="Ñuble">Ñuble</option></select>
   <button id="btnAll" onclick="verTodas()">Ver todas</button>
 </div>
 <div id="bnr"></div>
-<div id="fch">23/09/2026 18:45 · v7-kml</div>
+<div id="fch">23/09/2026 18:50 · v7-kml</div>
 <div id="pnl">
   <div class="ps"><div class="pt">Mapa Base</div>
     <label class="rr"><input type="radio" name="bm" value="estandar"> Estandar</label>
@@ -62,7 +62,7 @@
     <label class="rr"><input type="radio" name="bm" value="topografico"> Topografico</label>
   </div>
   <div class="ps"><div class="pt">Capas</div>
-    <label class="cr"><input type="checkbox" id="chkSt" checked> 🚉 Estaciones EFE</label>
+    <label class="cr"><input type="checkbox" id="chkSt" checked> 🚉 Red Operativa EFE</label>
     <label class="cr"><input type="checkbox" id="chkKml" checked> 🏗️ Planos KML estaciones</label>
   </div>
   <div class="ps"><div class="pt">Radios Distancia</div>
@@ -131,7 +131,7 @@ async function cargar(){
     document.getElementById("loader").style.display="none";
     poblarSt("");
     const tot=Object.values(SP).reduce((a,v)=>a+v.length,0);
-    document.getElementById("fch").textContent=`23/09/2026 18:45  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
+    document.getElementById("fch").textContent=`23/09/2026 18:50  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
     renderAll();
     map.on("moveend zoomend",()=>{if(!curSt&&!curReg)renderProps();});
     window.setTimeout(()=>map.fire("moveend"),800);
