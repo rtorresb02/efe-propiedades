@@ -46,14 +46,14 @@
 <div id="loader"><div class="spin"></div><div id="lmsg">Cargando propiedades...</div></div>
 <div id="map"></div>
 <div id="top">
-  <span class="tl">Red Operativa EFE:</span>
+  <span class="tl">Estaciones EFE:</span>
   <div style="position:relative;flex:1"><input id="stSel" placeholder="Escribe para buscar..." autocomplete="off"/><div id="stDrop"></div></div>
   <span class="tl">Región:</span>
   <select id="regSel"><option value="">Todas</option><option value="Bío-Bío">Bío-Bío</option><option value="La Araucanía">La Araucanía</option><option value="Los Lagos">Los Lagos</option><option value="Maule">Maule</option><option value="Metropolitana">Metropolitana</option><option value="O'Higgins">O'Higgins</option><option value="Región de Arica">Región de Arica</option><option value="Región de Los R">Región de Los R</option><option value="Valparaíso">Valparaíso</option><option value="Ñuble">Ñuble</option></select>
   <button id="btnAll" onclick="verTodas()">Ver todas</button>
 </div>
 <div id="bnr"></div>
-<div id="fch">23/09/2026 18:52 · v7-kml</div>
+<div id="fch">24/09/2026 12:14 · v7-kml</div>
 <div id="pnl">
   <div class="ps"><div class="pt">Mapa Base</div>
     <label class="rr"><input type="radio" name="bm" value="estandar"> Estandar</label>
@@ -62,8 +62,13 @@
     <label class="rr"><input type="radio" name="bm" value="topografico"> Topografico</label>
   </div>
   <div class="ps"><div class="pt">Capas</div>
-    <label class="cr"><input type="checkbox" id="chkSt" checked> 🚉 Red Operativa EFE</label>
+    <label class="cr"><input type="checkbox" id="chkSt" checked> 🚉 Estaciones EFE</label>
     <label class="cr"><input type="checkbox" id="chkKml" checked> 🏗️ Planos KML estaciones</label>
+    <label class="cr"><input type="checkbox" id="chkPoi" checked> 📍 Puntos de Interés (800m)</label>
+  </div>
+  <div class="ps"><div class="pt">Estado Estación</div>
+    <label class="cr"><input type="checkbox" class="ce_" data-e="Servicio Regular" checked><span class="dot" style="background:#1a8c3a"></span>Servicio Regular</label>
+    <label class="cr"><input type="checkbox" class="ce_" data-e="No Operativo" checked><span class="dot" style="background:#999"></span>No Operativo</label>
   </div>
   <div class="ps"><div class="pt">Radios Distancia</div>
     <label class="cr"><input type="checkbox" class="cr_" data-r="r1" checked><span class="bi" style="background:#1a8c3a33;border-color:#1a8c3a"></span>&lt;=800m Peatonal</label>
@@ -113,25 +118,25 @@ const RL={r1:"≤800m",r2:"800m-3km",r3:"3-5km",r4:">5km"};
 const TL={c:"Casa",d:"Departamento",l:"Local Comercial"};
 const OL={v:"Venta",a:"Arriendo"};
 const LC={"Metrotren Nos":"#185FA5","Rancagua Express":"#4a8a1a","Tren Melipilla":"#993556","Tren Sur":"#BA7517","Tren Valparaíso":"#533AB7","Tren Concepción":"#0F6E56","Tren Coronel":"#993C1D","Tren Temuco":"#3B6D11","Tren Los Lagos":"#0C447C","Ramal Constitución":"#854F0B","Ramal Talcahuano":"#5F5E5A"};
-let SP={},ST=[],curSt="",curReg="";
-let aR=new Set(["r1","r2"]),aP=new Set(["cv","dv","lv","ca","da","la"]);
+let SP={},ST=[],POI={},curSt="",curReg="";
+let aR=new Set(["r1","r2"]),aP=new Set(["cv","dv","lv","ca","da","la"]),aE=new Set(["Servicio Regular","No Operativo"]);
 let curT=TILES.satelite;
 const mapRenderer=L.svg({padding:0.5});
 const map=L.map("map",{center:[-33.65,-70.72],zoom:8,renderer:mapRenderer,layers:[curT]});
 setTimeout(()=>map.invalidateSize(),100);
 function forceRedraw(){if(mapRenderer._redraw)mapRenderer._redraw();}
-const lP=L.layerGroup().addTo(map),lS=L.layerGroup().addTo(map),lR=L.layerGroup().addTo(map),lK=L.layerGroup().addTo(map);
+const lP=L.layerGroup().addTo(map),lS=L.layerGroup().addTo(map),lR=L.layerGroup().addTo(map),lK=L.layerGroup().addTo(map),lPOI=L.layerGroup().addTo(map);
 const stSel=document.getElementById("stSel"),regSel=document.getElementById("regSel");
 
 async function cargar(){
   document.getElementById("lmsg").textContent="Cargando propiedades...";
   try{
-    const[r1,r2]=await Promise.all([fetch("efe_estaciones.json?v="+Date.now()).then(r=>r.json()),fetch("efe_propiedades.json?v="+Date.now()).then(r=>r.json())]);
-    ST=r1;SP=r2;
+    const[r1,r2,r3]=await Promise.all([fetch("efe_estaciones.json?v="+Date.now()).then(r=>r.json()),fetch("efe_propiedades.json?v="+Date.now()).then(r=>r.json()),fetch("pois_estaciones.json?v="+Date.now()).then(r=>r.json()).catch(()=>({}))]);
+    ST=r1;SP=r2;POI=r3;
     document.getElementById("loader").style.display="none";
     poblarSt("");
     const tot=Object.values(SP).reduce((a,v)=>a+v.length,0);
-    document.getElementById("fch").textContent=`23/09/2026 18:52  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
+    document.getElementById("fch").textContent=`24/09/2026 12:14  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
     renderAll();
     map.on("moveend zoomend",()=>{if(!curSt&&!curReg)renderProps();});
     window.setTimeout(()=>map.fire("moveend"),800);
@@ -189,8 +194,10 @@ regSel.onchange=()=>{
 document.querySelectorAll("input[name=bm]").forEach(r=>r.onchange=()=>{map.removeLayer(curT);curT=TILES[r.value];map.addLayer(curT);curT.bringToBack();});
 document.getElementById("chkSt").onchange=function(){this.checked?lS.addTo(map):map.removeLayer(lS)};
 document.getElementById("chkKml").onchange=function(){if(this.checked){lK.addTo(map);renderKML();}else{map.removeLayer(lK);}forceRedraw();};
+document.getElementById("chkPoi").onchange=function(){renderPOI();};
 document.querySelectorAll(".cr_").forEach(c=>{if(c.checked)aR.add(c.dataset.r);else aR.delete(c.dataset.r);c.onchange=function(){this.checked?aR.add(this.dataset.r):aR.delete(this.dataset.r);renderRings();};});
 document.querySelectorAll(".cp_").forEach(c=>c.onchange=function(){const k=this.dataset.t+this.dataset.o;this.checked?aP.add(k):aP.delete(k);renderProps();setTimeout(forceRedraw,30);});
+document.querySelectorAll(".ce_").forEach(c=>c.onchange=function(){this.checked?aE.add(this.dataset.e):aE.delete(this.dataset.e);renderSt();forceRedraw();});
 
 function normStr(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();}
 function renderKML(){
@@ -202,14 +209,29 @@ function renderKML(){
   });
   forceRedraw();
 }
+function renderPOI(){
+  lPOI.clearLayers();
+  if(!document.getElementById("chkPoi").checked) return;
+  if(!curSt) return;
+  const pois=POI[curSt]||[];
+  pois.forEach(p=>{
+    if(!p.lat||!p.lng) return;
+    L.marker([p.lat,p.lng],{icon:L.divIcon({className:"",html:`<div style="font-size:18px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))">${p.emoji||"📍"}</div>`,iconSize:[24,24],iconAnchor:[12,12]})})
+    .bindTooltip(`${p.emoji||"📍"} ${p.nombre} <br><small>${p.categoria}</small>`,{sticky:true})
+    .addTo(lPOI);
+  });
+  forceRedraw();
+}
 function renderSt(){
   lS.clearLayers();
   let show=curSt?ST.filter(s=>s.nombre===curSt):ST;
   if(curReg&&!curSt)show=show.filter(s=>s.region_short===curReg);
+  show=show.filter(s=>aE.has(s.estado||"Servicio Regular"));
   show.forEach(s=>{
     const col=LC[s.linea]||"#555";
-    L.marker([s.lat,s.lng],{icon:L.divIcon({className:"",html:`<div class="est-mk" style="background:${col}">🚉</div>`,iconSize:[32,32],iconAnchor:[16,16]}),zIndexOffset:1000})
-    .bindPopup(`<div style="font-family:Arial;min-width:210px"><div style="font-size:13px;font-weight:700;color:#1a3a5c">🚉 ${s.nombre}</div><div style="font-size:13px;color:${col};font-weight:700;margin:3px 0">${s.linea}</div><div style="font-size:13px;color:#666;margin-bottom:10px">${s.comuna} · ${s.region_short}</div><button onclick="goSt('${s.nombre}')" style="background:${col};color:#fff;border:none;border-radius:6px;padding:8px;width:100%;font-size:13px;font-weight:700;cursor:pointer">🔍 Ver ${(SP[s.nombre]||[]).length} propiedades</button></div>`,{maxWidth:230}).addTo(lS);
+    const opac=(s.estado==="No Operativo")?"0.5":"1";
+    L.marker([s.lat,s.lng],{icon:L.divIcon({className:"",html:`<div class="est-mk" style="background:${col};opacity:${opac}">🚉</div>`,iconSize:[32,32],iconAnchor:[16,16]}),zIndexOffset:1000})
+    .bindPopup(`<div style="font-family:Arial;min-width:210px"><div style="font-size:13px;font-weight:700;color:#1a3a5c">🚉 ${s.nombre}</div><div style="font-size:12px;color:${s.estado==="No Operativo"?"#999":"#1a8c3a"};font-weight:700;margin:3px 0">${s.estado||"Servicio Regular"}</div><div style="font-size:13px;color:${col};font-weight:700;margin:3px 0">${s.tramo||s.linea}</div><div style="font-size:13px;color:#666;margin-bottom:10px">${s.comuna} · ${s.region_short}</div><button onclick="goSt('${s.nombre}')" style="background:${col};color:#fff;border:none;border-radius:6px;padding:8px;width:100%;font-size:13px;font-weight:700;cursor:pointer">🔍 Ver ${(SP[s.nombre]||[]).length} propiedades</button></div>`,{maxWidth:230}).addTo(lS);
   });
 }
 function renderRings(){
@@ -241,7 +263,7 @@ function renderProps(){
   forceRedraw();
   setTimeout(forceRedraw,50);
 }
-function renderAll(){renderSt();renderRings();renderProps();if(document.getElementById("chkKml").checked)renderKML();}
+function renderAll(){renderSt();renderRings();renderProps();if(document.getElementById("chkKml").checked)renderKML();renderPOI();}
 window.verTodas=()=>{
   curSt="";curReg="";stSel.value="";regSel.value="";poblarSt("");
   map.setView([-33.65,-70.72],8,{animate:false});renderAll();forceRedraw();
