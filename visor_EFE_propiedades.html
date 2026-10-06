@@ -53,7 +53,7 @@
   <button id="btnAll" onclick="verTodas()">Ver todas</button>
 </div>
 <div id="bnr"></div>
-<div id="fch">06/10/2026 16:58 · v7-kml</div>
+<div id="fch">06/10/2026 17:14 · v7-kml</div>
 <div id="pnl">
   <div class="ps"><div class="pt">Mapa Base</div>
     <label class="rr"><input type="radio" name="bm" value="estandar"> Estandar</label>
@@ -136,7 +136,7 @@ async function cargar(){
     document.getElementById("loader").style.display="none";
     poblarSt("");
     const tot=Object.values(SP).reduce((a,v)=>a+v.length,0);
-    document.getElementById("fch").textContent=`06/10/2026 16:58  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
+    document.getElementById("fch").textContent=`06/10/2026 17:14  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
     renderAll();
     map.on("moveend zoomend",()=>{if(!curSt&&!curReg)renderProps();});
     window.setTimeout(()=>map.fire("moveend"),800);
