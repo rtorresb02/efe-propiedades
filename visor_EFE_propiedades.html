@@ -53,7 +53,7 @@
   <button id="btnAll" onclick="verTodas()">Ver todas</button>
 </div>
 <div id="bnr"></div>
-<div id="fch">13/10/2026 11:35 · v7-kml</div>
+<div id="fch">13/10/2026 16:34 · v7-kml</div>
 <div id="pnl">
   <div class="ps"><div class="pt">Mapa Base</div>
     <label class="rr"><input type="radio" name="bm" value="estandar"> Estandar</label>
@@ -75,7 +75,7 @@
       <label class="cr"><input type="checkbox" class="ct_" data-c="Terrenos de atractivo comercial" checked><span class="dot" style="background:#e8a000"></span>Atractivo comercial</label>
       <label class="cr"><input type="checkbox" class="ct_" data-c="Operacional" checked><span class="dot" style="background:#185FA5"></span>Operacional</label>
       <label class="cr"><input type="checkbox" class="ct_" data-c="Estrategia" checked><span class="dot" style="background:#8b44d4"></span>Estrategia</label>
-      <label class="cr"><input type="checkbox" class="ct_" data-c="Terrenos prescindibles" checked><span class="dot" style="background:#e03020"></span>Prescindibles</label>
+      <label class="cr"><input type="checkbox" class="ct_" data-c="Terrenos prescindibles" checked><span class="dot" style="background:#e03020"></span>Bajo atractivo comercial</label>
       <label class="cr"><input type="checkbox" class="ct_" data-c="" checked><span class="dot" style="background:#888"></span>Sin categoría</label>
     </div>
   </div>
@@ -122,7 +122,7 @@
     <div class="lr"><span class="dot" style="background:#e8a000"></span>Atractivo comercial</div>
     <div class="lr"><span class="dot" style="background:#185FA5"></span>Operacional</div>
     <div class="lr"><span class="dot" style="background:#8b44d4"></span>Estrategia</div>
-    <div class="lr"><span class="dot" style="background:#e03020"></span>Prescindibles</div>
+    <div class="lr"><span class="dot" style="background:#e03020"></span>Bajo atractivo comercial</div>
   </div>
 </div>
 <button id="bxl" onclick="exportXL()">&#11015; Exportar Excel</button>
@@ -144,6 +144,8 @@ let aT=new Set(["Terrenos de atractivo comercial","Operacional","Estrategia","Te
 let TERR=null,terrLoading=false;
 const TC={"Terrenos de atractivo comercial":"#e8a000","Operacional":"#185FA5","Estrategia":"#8b44d4","Terrenos prescindibles":"#e03020"};
 function colTerr(cat){return TC[cat]||"#888888";}
+const TL_CAT={"Terrenos prescindibles":"Bajo atractivo comercial"};
+function labelTerr(cat){return TL_CAT[cat]||cat;}
 let curT=TILES.satelite;
 const mapRenderer=L.svg({padding:0.5});
 const map=L.map("map",{center:[-33.65,-70.72],zoom:8,renderer:mapRenderer,layers:[curT]});
@@ -160,7 +162,7 @@ async function cargar(){
     document.getElementById("loader").style.display="none";
     poblarSt("");
     const tot=Object.values(SP).reduce((a,v)=>a+v.length,0);
-    document.getElementById("fch").textContent=`13/10/2026 11:35  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
+    document.getElementById("fch").textContent=`13/10/2026 16:34  ·  ${ST.length} estaciones  ·  ${tot.toLocaleString("es-CL")} propiedades reales`;
     renderAll();
     map.on("moveend zoomend",()=>{if(!curSt&&!curReg)renderProps();});
     window.setTimeout(()=>map.fire("moveend"),800);
@@ -280,7 +282,7 @@ function renderTerrenos(){
       const p=feat.properties;
       const val=p.valor_comercial_musd?`<tr><td style="padding:3px 6px;color:#888">Valor comercial</td><td style="padding:3px 6px;text-align:right">${fmtNum(p.valor_comercial_musd)} MUSD</td></tr>`:"";
       const tas=p.tasacion_2025_musd?`<tr style="background:#f4f8ff"><td style="padding:3px 6px;color:#888">Tasación 2025</td><td style="padding:3px 6px;text-align:right">${fmtNum(p.tasacion_2025_musd)} MUSD</td></tr>`:"";
-      layer.bindPopup(`<div style="font-family:Arial;min-width:240px"><div style="font-size:13px;font-weight:700;color:#1a3a5c">🗺️ ${p.nombre}</div><div style="font-size:12px;font-weight:700;color:${colTerr(p.categoria)};margin:3px 0">${p.categoria||"Sin categoría"}</div><div style="font-size:12px;color:#666;margin-bottom:8px">${p.clasificacion||""}</div><table style="font-size:12px;width:100%;border-collapse:collapse"><tr><td style="padding:3px 6px;color:#888">Tipo bien</td><td style="padding:3px 6px;text-align:right">${p.tipo_bien||"N/D"}</td></tr><tr style="background:#f4f8ff"><td style="padding:3px 6px;color:#888">Estado dominio</td><td style="padding:3px 6px;text-align:right">${p.estado_dom||"N/D"}</td></tr><tr><td style="padding:3px 6px;color:#888">Tramo / Línea</td><td style="padding:3px 6px;text-align:right">${p.tramo||p.linea||"N/D"}</td></tr><tr style="background:#f4f8ff"><td style="padding:3px 6px;color:#888">Comuna</td><td style="padding:3px 6px;text-align:right">${p.comuna||"N/D"} · ${p.region||""}</td></tr><tr><td style="padding:3px 6px;color:#888">Superficie</td><td style="padding:3px 6px;text-align:right">${fmtNum(p.area_ha)} ha</td></tr>${val}${tas}</table></div>`,{maxWidth:280});
+      layer.bindPopup(`<div style="font-family:Arial;min-width:240px"><div style="font-size:13px;font-weight:700;color:#1a3a5c">🗺️ ${p.nombre}</div><div style="font-size:12px;font-weight:700;color:${colTerr(p.categoria)};margin:3px 0">${labelTerr(p.categoria)||"Sin categoría"}</div><div style="font-size:12px;color:#666;margin-bottom:8px">${p.clasificacion||""}</div><table style="font-size:12px;width:100%;border-collapse:collapse"><tr><td style="padding:3px 6px;color:#888">Tipo bien</td><td style="padding:3px 6px;text-align:right">${p.tipo_bien||"N/D"}</td></tr><tr style="background:#f4f8ff"><td style="padding:3px 6px;color:#888">Estado dominio</td><td style="padding:3px 6px;text-align:right">${p.estado_dom||"N/D"}</td></tr><tr><td style="padding:3px 6px;color:#888">Tramo / Línea</td><td style="padding:3px 6px;text-align:right">${p.tramo||p.linea||"N/D"}</td></tr><tr style="background:#f4f8ff"><td style="padding:3px 6px;color:#888">Comuna</td><td style="padding:3px 6px;text-align:right">${p.comuna||"N/D"} · ${p.region||""}</td></tr><tr><td style="padding:3px 6px;color:#888">Superficie</td><td style="padding:3px 6px;text-align:right">${fmtNum(p.area_ha)} ha</td></tr>${val}${tas}</table></div>`,{maxWidth:280});
     }
   }).addTo(lTerr);
 }
